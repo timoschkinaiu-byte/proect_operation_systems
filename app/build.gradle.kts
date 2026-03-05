@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
     // Room с kapt (РАБОТАЕТ!)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

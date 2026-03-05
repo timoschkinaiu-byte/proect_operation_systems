@@ -1,56 +1,75 @@
 package com.example.lifeadvices11.ui.sections.nutrition
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-@OptIn(ExperimentalMaterial3Api::class)
+import com.example.lifeadvices11.ui.navigation.Screen
+import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 @Composable
 fun NutritionScreen(navController: NavController) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Питание") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                }
-            )
+    val viewModel: NutritionOnboardingViewModel = viewModel()
+    var isLoading by remember { mutableStateOf(true) }
+    var needsOnboarding by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val hasOnboarding = withContext(Dispatchers.IO) {
+            viewModel.hasCompletedOnboarding()
         }
-    ) { paddingValues ->
+        needsOnboarding = !hasOnboarding
+        isLoading = false
+
+        if (needsOnboarding) {
+            navController.navigate(Screen.NutritionOnboarding.route) {
+                popUpTo(Screen.Nutrition.route) { inclusive = true }
+            }
+        }
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else if (!needsOnboarding) {
+        // Основной экран питания
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "🍎 ПИТАНИЕ",
+                text = "🍎 Питание",
                 style = MaterialTheme.typography.headlineLarge
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "Раздел в разработке",
+                text = "Здесь будет основной экран питания",
                 style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                text = "Здесь будут нормы калорий, БЖУ и трекинг",
-                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
