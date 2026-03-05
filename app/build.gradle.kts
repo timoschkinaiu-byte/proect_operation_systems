@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lifeadvices"
+    namespace = "com.example.lifeadvices11"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.lifeadvices"
+        applicationId = "com.example.lifeadvices11"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -55,7 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
     // Room с kapt (РАБОТАЕТ!)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
