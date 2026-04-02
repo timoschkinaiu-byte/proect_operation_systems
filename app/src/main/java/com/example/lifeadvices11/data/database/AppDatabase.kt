@@ -6,8 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lifeadvices11.data.dao.NutritionDao
+import com.example.lifeadvices11.data.dao.SleepDao
 import com.example.lifeadvices11.data.dao.UserProfileDao
 import com.example.lifeadvices11.data.entities.UserProfileEntity
+import com.example.lifeadvices11.data.entities.SleepProfileEntity
+import com.example.lifeadvices11.data.entities.DailySleepEntity
 import com.example.lifeadvices11.data.models.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,16 +21,18 @@ import kotlinx.coroutines.launch
         UserProfileEntity::class,
         DailyNutritionEntity::class,
         MealEntryEntity::class,
+        SleepProfileEntity::class,
+        DailySleepEntity::class,
         PredefinedMealEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userProfileDao(): UserProfileDao
     abstract fun nutritionDao(): NutritionDao
-
+    abstract fun sleepDao(): SleepDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null

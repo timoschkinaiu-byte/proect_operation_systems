@@ -78,7 +78,10 @@ fun MainScreen(navController: NavController) {
                 icon = Icons.Filled.Bedtime,
                 label = "Сон",
                 description = "Трекер и советы",
-                onClick = { navController.navigate(Screen.Sleep.route) }
+                onClick = {
+                    android.util.Log.d("MainScreen", "=== НАЖАТА КНОПКА СОН ===")
+                    navController.navigate(Screen.Sleep.route)
+                }
             )
 
             ModuleButton(

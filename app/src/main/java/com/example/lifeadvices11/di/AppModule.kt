@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.lifeadvices11.data.database.AppDatabase
 import com.example.lifeadvices11.data.repositories.NutritionRepository
 import com.example.lifeadvices11.data.repositories.UserRepository
+import com.example.lifeadvices11.data.repositories.SleepRepository
 
 object AppModule {
 
@@ -23,5 +24,9 @@ object AppModule {
             nutritionDao = database.nutritionDao(),
             userDao = database.userProfileDao()
         )
+    }
+    fun provideSleepRepository(): SleepRepository {
+        val database = AppDatabase.getInstance(appContext)
+        return SleepRepository(database.sleepDao())
     }
 }

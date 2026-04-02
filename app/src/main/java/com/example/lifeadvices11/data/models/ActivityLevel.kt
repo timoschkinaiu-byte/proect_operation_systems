@@ -10,7 +10,7 @@ enum class ActivityLevel(
 ) {
     SEDENTARY(
         key = "sedentary",
-        title = "🪑 Сидячий",
+        title = "Сидячий",
         description = "Минимум или отсутствие физической активности",
         examples = "Офисная работа, почти нет спорта, передвижение на транспорте",
         multiplier = 1.2,
@@ -19,7 +19,7 @@ enum class ActivityLevel(
 
     LIGHT(
         key = "light",
-        title = "🚶 Легкая активность",
+        title = "Легкая активность",
         description = "Легкие нагрузки 1-3 дня в неделю",
         examples = "Прогулки пешком, легкая уборка, редкие тренировки",
         multiplier = 1.375,
@@ -28,7 +28,7 @@ enum class ActivityLevel(
 
     MODERATE(
         key = "moderate",
-        title = "🏃 Умеренная активность",
+        title = "Умеренная активность",
         description = "Средние нагрузки 3-5 дней в неделю",
         examples = "Фитнес, бег, плавание, танцы, активная работа",
         multiplier = 1.55,
@@ -37,7 +37,7 @@ enum class ActivityLevel(
 
     ACTIVE(
         key = "active",
-        title = "💪 Высокая активность",
+        title = "Высокая активность",
         description = "Интенсивные тренировки 6-7 дней в неделю",
         examples = "Ежедневные тренировки, спортсмены, физическая работа",
         multiplier = 1.725,

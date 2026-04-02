@@ -13,6 +13,7 @@ import com.example.lifeadvices11.ui.sections.sleep.SleepScreen
 import com.example.lifeadvices11.ui.sections.study.StudyScreen
 import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingScreen
 // ✅ ПРАВИЛЬНО: sealed class с route:String
+import com.example.lifeadvices11.ui.onboarding.sleep.SleepOnboardingScreen
 sealed class Screen(val route: String) {
     object Main : Screen("main")
     object Onboarding : Screen("onboarding")
@@ -22,6 +23,7 @@ sealed class Screen(val route: String) {
     object Sleep : Screen("sleep")
     object Study : Screen("study")
     object NutritionOnboarding : Screen("nutrition_onboarding")
+    object SleepOnboarding : Screen("sleep_onboarding")
 }
 
 @Composable
@@ -58,6 +60,9 @@ fun AppNavHost(
         }
         composable(Screen.NutritionOnboarding.route) {
             NutritionOnboardingScreen(navController = navController)
+        }
+        composable(Screen.SleepOnboarding.route) {
+            SleepOnboardingScreen(navController = navController)
         }
     }
 }
