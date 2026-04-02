@@ -3,10 +3,13 @@ package com.example.lifeadvices11.ui.onboarding.sleep
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lifeadvices11.data.repositories.SleepRepository
+
+import com.example.lifeadvices11.data.entities.SleepProfileEntity
 import com.example.lifeadvices11.di.AppModule
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.example.lifeadvices11.data.entities.SleepPracticeEntity
 
 class SleepOnboardingViewModel : ViewModel() {
 
@@ -71,6 +74,18 @@ class SleepOnboardingViewModel : ViewModel() {
                 issues = _sleepIssues.value,
                 preferredWakeTime = _preferredWakeTime.value
             )
+            val profile = SleepProfileEntity(
+                id = 1,
+                targetSleepHours = _targetSleepHours.value.toDoubleOrNull() ?: 8.0,
+                typicalBedTime = _bedTime.value,
+                typicalWakeTime = _wakeTime.value,
+                sleepQuality = _sleepQuality.value,
+                sleepIssues = _sleepIssues.value,
+                preferredWakeUpTime = _preferredWakeTime.value,
+                hasCompletedSleepOnboarding = true
+            )
+            val practices = repository.generatePersonalizedPractices(profile)
+            repository.savePractices(practices)
 
             _isSaving.value = false
             onComplete()

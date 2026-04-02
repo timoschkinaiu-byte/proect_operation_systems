@@ -7,11 +7,11 @@ import androidx.room.Query
 import androidx.room.Update
 import com.example.lifeadvices11.data.entities.SleepProfileEntity
 import com.example.lifeadvices11.data.entities.DailySleepEntity
+import com.example.lifeadvices11.data.entities.SleepPracticeEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SleepDao {
-
     // Sleep Profile
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSleepProfile(profile: SleepProfileEntity)
@@ -45,4 +45,19 @@ interface SleepDao {
     fun getSleepHistory(startDate: Long, endDate: Long): Flow<List<DailySleepEntity>>
     @Query("SELECT * FROM daily_sleep ORDER BY date DESC LIMIT 7")
     suspend fun getLastWeekSleep(): List<DailySleepEntity>
+
+
+
+    // Sleep practices
+    @Query("SELECT * FROM sleep_practices")
+    suspend fun getAllPractices(): List<SleepPracticeEntity>
+
+    @Query("SELECT * FROM sleep_practices WHERE category = :category")
+    suspend fun getPracticesByCategory(category: String): List<SleepPracticeEntity>
+
+    @Update
+    suspend fun updatePractice(practice: SleepPracticeEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPractices(practices: List<SleepPracticeEntity>)
 }

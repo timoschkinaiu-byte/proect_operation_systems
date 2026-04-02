@@ -16,6 +16,9 @@ class LifeAdvicesApplication : Application() {
         CoroutineScope(Dispatchers.IO).launch {
             val repository = AppModule.provideUserRepository()
             repository.createProfileIfNotExists()
+            val sleepRepository = AppModule.provideSleepRepository()
+            sleepRepository.createSleepProfileIfNotExists()
+
         }
     }
 }

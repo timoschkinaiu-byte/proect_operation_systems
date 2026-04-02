@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Spa
 import androidx.navigation.compose.rememberNavController
 import com.example.lifeadvices11.ui.sections.MainScreen
 import com.example.lifeadvices11.ui.sections.nutrition.NutritionScreen
@@ -12,8 +14,12 @@ import com.example.lifeadvices11.ui.sections.psychology.PsychologyScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepScreen
 import com.example.lifeadvices11.ui.sections.study.StudyScreen
 import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingScreen
-// ✅ ПРАВИЛЬНО: sealed class с route:String
+import com.example.lifeadvices11.ui.sections.sleep.AddSleepEntryScreen
 import com.example.lifeadvices11.ui.onboarding.sleep.SleepOnboardingScreen
+import com.example.lifeadvices11.ui.sections.sleep.SleepPracticeDetailScreen
+import com.example.lifeadvices11.ui.sections.sleep.SleepPracticesScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 sealed class Screen(val route: String) {
     object Main : Screen("main")
     object Onboarding : Screen("onboarding")
@@ -24,6 +30,9 @@ sealed class Screen(val route: String) {
     object Study : Screen("study")
     object NutritionOnboarding : Screen("nutrition_onboarding")
     object SleepOnboarding : Screen("sleep_onboarding")
+    object SleepAddEntry : Screen("sleep_add_entry")
+    object SleepPractices : Screen("sleep_practices")
+    object SleepPracticeDetail : Screen("sleep_practice_detail/{practiceId}")
 }
 
 @Composable
@@ -64,5 +73,21 @@ fun AppNavHost(
         composable(Screen.SleepOnboarding.route) {
             SleepOnboardingScreen(navController = navController)
         }
+        composable(Screen.SleepAddEntry.route) {
+            AddSleepEntryScreen(navController = navController)
+        }
+        composable(Screen.SleepPractices.route) {
+            SleepPracticesScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.SleepPracticeDetail.route,
+            arguments = listOf(navArgument("practiceId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val practiceId = backStackEntry.arguments?.getLong("practiceId") ?: 0L
+            SleepPracticeDetailScreen(navController = navController, practiceId = practiceId)
+        }
+
+
     }
 }
