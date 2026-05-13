@@ -6,12 +6,20 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lifeadvices11.data.dao.NutritionDao
+import com.example.lifeadvices11.data.dao.PsychologyDao
 import com.example.lifeadvices11.data.dao.SleepDao
+import com.example.lifeadvices11.data.dao.StudyDao
 import com.example.lifeadvices11.data.dao.UserProfileDao
+import com.example.lifeadvices11.data.entities.DailyStudyEntity
+import com.example.lifeadvices11.data.entities.DailyEmotionEntity
+import com.example.lifeadvices11.data.entities.PsychologyPracticeEntity
+import com.example.lifeadvices11.data.entities.PsychologyProfileEntity
 import com.example.lifeadvices11.data.entities.UserProfileEntity
 import com.example.lifeadvices11.data.entities.SleepProfileEntity
 import com.example.lifeadvices11.data.entities.DailySleepEntity
 import com.example.lifeadvices11.data.entities.SleepPracticeEntity
+import com.example.lifeadvices11.data.entities.StudyCategoryEntity
+import com.example.lifeadvices11.data.entities.StudyProfileEntity
 import com.example.lifeadvices11.data.models.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,10 +32,16 @@ import kotlinx.coroutines.launch
         MealEntryEntity::class,
         SleepProfileEntity::class,
         DailySleepEntity::class,
+        StudyProfileEntity::class,
+        DailyStudyEntity::class,
+        PsychologyProfileEntity::class,
+        DailyEmotionEntity::class,
         PredefinedMealEntity::class,
-        SleepPracticeEntity::class
+        SleepPracticeEntity::class,
+        StudyCategoryEntity::class,
+        PsychologyPracticeEntity::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,6 +49,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
     abstract fun nutritionDao(): NutritionDao
     abstract fun sleepDao(): SleepDao
+    abstract fun studyDao(): StudyDao
+    abstract fun psychologyDao(): PsychologyDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -54,6 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     prePopulateMeals(database.nutritionDao())
                                     prePopulateSleepPractices(database.sleepDao())
+                                    prePopulatePsychologyPractices(database.psychologyDao())
                                 }
                             }
                         }
@@ -163,6 +180,57 @@ abstract class AppDatabase : RoomDatabase() {
                     category = "distraction",
                     benefits = "Отвлекает от тревожных мыслей\nНе требует активного участия\nПодходит для тех, кому трудно медитировать\nСоздаёт ассоциацию голоса со сном\nПомогает при синдроме беспокойных ног\nЭффективно при хронической бессоннице",
                     contraindications = "Может не подойти людям с гиперчувствительностью к звукам\nПри тиннитусе (шуме в ушах) может мешать"
+                )
+            )
+            dao.insertPractices(practices)
+        }
+
+        private suspend fun prePopulatePsychologyPractices(dao: PsychologyDao) {
+            val practices = listOf(
+                PsychologyPracticeEntity(
+                    title = "Квадратное дыхание",
+                    shortDescription = "Снижает острое напряжение за 3-5 минут.",
+                    fullDescription = "Практика помогает быстро замедлиться, выровнять дыхание и вернуть внимание в настоящий момент. Подходит при тревоге, перегрузе и эмоциональной турбулентности.",
+                    category = "breathing",
+                    durationMinutes = 5,
+                    targetGoal = "reduce_anxiety",
+                    isRecommended = true
+                ),
+                PsychologyPracticeEntity(
+                    title = "Дневник мыслей",
+                    shortDescription = "Помогает вынести тревожные мысли из головы на бумагу.",
+                    fullDescription = "Короткая письменная практика, в которой пользователь замечает эмоцию, фиксирует ситуацию и формулирует более спокойный, реалистичный взгляд на происходящее.",
+                    category = "journaling",
+                    durationMinutes = 10,
+                    targetGoal = "understand_emotions",
+                    isRecommended = true
+                ),
+                PsychologyPracticeEntity(
+                    title = "Техника 5-4-3-2-1",
+                    shortDescription = "Возвращает ощущение опоры, когда сложно собраться.",
+                    fullDescription = "Граундинг-практика через органы чувств: заметить 5 предметов вокруг, 4 ощущения телом, 3 звука, 2 запаха и 1 вкус. Хорошо работает при стрессе и панике.",
+                    category = "grounding",
+                    durationMinutes = 5,
+                    targetGoal = "reduce_anxiety",
+                    isRecommended = true
+                ),
+                PsychologyPracticeEntity(
+                    title = "Чек-ин эмоций",
+                    shortDescription = "Позволяет заметить и назвать текущее состояние.",
+                    fullDescription = "Небольшой эмоциональный чек-ин помогает отслеживать динамику настроения и замечать триггеры. Это база для дневника эмоций и персональных рекомендаций.",
+                    category = "awareness",
+                    durationMinutes = 3,
+                    targetGoal = "improve_mood",
+                    isRecommended = false
+                ),
+                PsychologyPracticeEntity(
+                    title = "Пауза самоподдержки",
+                    shortDescription = "Мягкая практика против внутренней критики.",
+                    fullDescription = "Практика состоит из трёх шагов: признать, что сейчас трудно; напомнить себе, что трудности бывают у всех; выбрать одну поддерживающую фразу для себя.",
+                    category = "self_support",
+                    durationMinutes = 7,
+                    targetGoal = "fight_burnout",
+                    isRecommended = true
                 )
             )
             dao.insertPractices(practices)

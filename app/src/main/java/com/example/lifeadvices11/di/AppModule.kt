@@ -3,6 +3,8 @@ package com.example.lifeadvices11.di
 import android.content.Context
 import com.example.lifeadvices11.data.database.AppDatabase
 import com.example.lifeadvices11.data.repositories.NutritionRepository
+import com.example.lifeadvices11.data.repositories.PsychologyRepository
+import com.example.lifeadvices11.data.repositories.StudyRepository
 import com.example.lifeadvices11.data.repositories.UserRepository
 import com.example.lifeadvices11.data.repositories.SleepRepository
 
@@ -28,5 +30,15 @@ object AppModule {
     fun provideSleepRepository(): SleepRepository {
         val database = AppDatabase.getInstance(appContext)
         return SleepRepository(database.sleepDao())
+    }
+
+    fun provideStudyRepository(): StudyRepository {
+        val database = AppDatabase.getInstance(appContext)
+        return StudyRepository(database.studyDao())
+    }
+
+    fun providePsychologyRepository(): PsychologyRepository {
+        val database = AppDatabase.getInstance(appContext)
+        return PsychologyRepository(database.psychologyDao())
     }
 }

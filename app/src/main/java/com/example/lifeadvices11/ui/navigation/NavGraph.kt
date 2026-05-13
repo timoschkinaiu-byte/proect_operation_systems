@@ -14,8 +14,10 @@ import com.example.lifeadvices11.ui.sections.psychology.PsychologyScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepScreen
 import com.example.lifeadvices11.ui.sections.study.StudyScreen
 import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingScreen
+import com.example.lifeadvices11.ui.onboarding.psychology.PsychologyOnboardingScreen
 import com.example.lifeadvices11.ui.sections.sleep.AddSleepEntryScreen
 import com.example.lifeadvices11.ui.onboarding.sleep.SleepOnboardingScreen
+import com.example.lifeadvices11.ui.onboarding.study.StudyOnboardingScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepPracticeDetailScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepPracticesScreen
 import androidx.navigation.NavType
@@ -29,7 +31,9 @@ sealed class Screen(val route: String) {
     object Sleep : Screen("sleep")
     object Study : Screen("study")
     object NutritionOnboarding : Screen("nutrition_onboarding")
+    object PsychologyOnboarding : Screen("psychology_onboarding")
     object SleepOnboarding : Screen("sleep_onboarding")
+    object StudyOnboarding : Screen("study_onboarding")
     object SleepAddEntry : Screen("sleep_add_entry")
     object SleepPractices : Screen("sleep_practices")
     object SleepPracticeDetail : Screen("sleep_practice_detail/{practiceId}")
@@ -70,8 +74,14 @@ fun AppNavHost(
         composable(Screen.NutritionOnboarding.route) {
             NutritionOnboardingScreen(navController = navController)
         }
+        composable(Screen.PsychologyOnboarding.route) {
+            PsychologyOnboardingScreen(navController = navController)
+        }
         composable(Screen.SleepOnboarding.route) {
             SleepOnboardingScreen(navController = navController)
+        }
+        composable(Screen.StudyOnboarding.route) {
+            StudyOnboardingScreen(navController = navController)
         }
         composable(Screen.SleepAddEntry.route) {
             AddSleepEntryScreen(navController = navController)

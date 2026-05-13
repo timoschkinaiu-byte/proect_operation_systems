@@ -1,8 +1,23 @@
 package com.example.lifeadvices11.ui.onboarding.sleep
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -12,22 +27,23 @@ fun SleepQualityStep(
     viewModel: SleepOnboardingViewModel,
     onNext: () -> Unit
 ) {
-    var selectedQuality by remember { mutableStateOf("") }
+    val selectedQuality by viewModel.sleepQuality.collectAsState()
 
     val qualities = listOf(
-        Triple("good", "😊 Хорошее", "Сплю достаточно, просыпаюсь отдохнувшим"),
-        Triple("normal", "😐 Нормальное", "Бывают проблемы, но в целом нормально"),
-        Triple("poor", "😫 Плохое", "Часто не высыпаюсь, тяжело просыпаюсь")
+        Triple("good", "Хорошее", "Чаще всего высыпаетесь и просыпаетесь бодрым."),
+        Triple("normal", "Нормальное", "Иногда сон сбивается, но в целом режим устраивает."),
+        Triple("poor", "Плохое", "Часто не высыпаетесь, тяжело уснуть или проснуться.")
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "ШАГ 2 ИЗ 3",
+            text = "Шаг 2 из 3",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -39,38 +55,51 @@ fun SleepQualityStep(
             style = MaterialTheme.typography.headlineLarge
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Оценка сна нужна, чтобы подобрать практики для засыпания и дальнейшие советы в основном разделе.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         qualities.forEach { (key, title, description) ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 6.dp),
-                onClick = {
-                    selectedQuality = key
-                    viewModel.updateSleepQuality(key)
-                },
+                onClick = { viewModel.updateSleepQuality(key) },
                 colors = CardDefaults.cardColors(
-                    containerColor = if (selectedQuality == key)
+                    containerColor = if (selectedQuality == key) {
                         MaterialTheme.colorScheme.primaryContainer
-                    else
+                    } else {
                         MaterialTheme.colorScheme.surfaceVariant
+                    }
                 )
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge
+                    RadioButton(
+                        selected = selectedQuality == key,
+                        onClick = { viewModel.updateSleepQuality(key) }
                     )
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(modifier = Modifier.padding(start = 8.dp)) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

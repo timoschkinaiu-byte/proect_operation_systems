@@ -18,6 +18,10 @@ class LifeAdvicesApplication : Application() {
             repository.createProfileIfNotExists()
             val sleepRepository = AppModule.provideSleepRepository()
             sleepRepository.createSleepProfileIfNotExists()
+            val studyRepository = AppModule.provideStudyRepository()
+            studyRepository.createStudyProfileIfNotExists()
+            val psychologyRepository = AppModule.providePsychologyRepository()
+            psychologyRepository.createProfileIfNotExists()
 
         }
     }
