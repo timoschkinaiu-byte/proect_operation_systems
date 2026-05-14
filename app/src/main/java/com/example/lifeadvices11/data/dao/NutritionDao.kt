@@ -34,6 +34,9 @@ interface NutritionDao {
     @Query("SELECT * FROM predefined_meals")
     suspend fun getAllPredefinedMeals(): List<PredefinedMealEntity>
 
+    @Query("SELECT * FROM predefined_meals WHERE id = :mealId LIMIT 1")
+    suspend fun getPredefinedMealById(mealId: Long): PredefinedMealEntity?
+
     @Query("SELECT * FROM predefined_meals WHERE category = :category")
     suspend fun getMealsByCategory(category: String): List<PredefinedMealEntity>
 

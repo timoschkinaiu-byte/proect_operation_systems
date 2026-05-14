@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Spa
 import androidx.navigation.compose.rememberNavController
 import com.example.lifeadvices11.ui.sections.MainScreen
+import com.example.lifeadvices11.ui.sections.nutrition.NutritionMealDetailScreen
 import com.example.lifeadvices11.ui.sections.nutrition.NutritionScreen
 import com.example.lifeadvices11.ui.sections.sport.SportScreen
 import com.example.lifeadvices11.ui.sections.psychology.PsychologyScreen
@@ -37,6 +38,9 @@ sealed class Screen(val route: String) {
     object SleepAddEntry : Screen("sleep_add_entry")
     object SleepPractices : Screen("sleep_practices")
     object SleepPracticeDetail : Screen("sleep_practice_detail/{practiceId}")
+    object NutritionMealDetail : Screen("nutrition_meal_detail/{mealId}") {
+        fun createRoute(mealId: Long): String = "nutrition_meal_detail/$mealId"
+    }
 }
 
 @Composable
@@ -54,6 +58,14 @@ fun AppNavHost(
 
         composable(Screen.Nutrition.route) {
             NutritionScreen(navController = navController)
+        }
+
+        composable(
+            route = Screen.NutritionMealDetail.route,
+            arguments = listOf(navArgument("mealId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val mealId = backStackEntry.arguments?.getLong("mealId") ?: 0L
+            NutritionMealDetailScreen(navController = navController, mealId = mealId)
         }
 
         composable(Screen.Sport.route) {

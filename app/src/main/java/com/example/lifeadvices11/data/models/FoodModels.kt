@@ -2,9 +2,7 @@ package com.example.lifeadvices11.data.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.Date
 
-// Сущность для ежедневного трекинга
 @Entity(tableName = "daily_nutrition")
 data class DailyNutritionEntity(
     @PrimaryKey(autoGenerate = true)
@@ -20,13 +18,12 @@ data class DailyNutritionEntity(
     val goalCarbs: Int = 0
 )
 
-// Сущность для приемов пищи
 @Entity(tableName = "meal_entries")
 data class MealEntryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val dailyNutritionId: Long = 0,
-    val mealType: String = "", // "breakfast", "lunch", "dinner", "snack"
+    val mealType: String = "",
     val foodName: String = "",
     val calories: Int = 0,
     val protein: Int = 0,
@@ -35,19 +32,17 @@ data class MealEntryEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
-// Сущность для готовых рационов (встроенные в приложение)
 @Entity(tableName = "meal_plans")
 data class MealPlanEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val category: String = "", // "lose_weight", "gain_mass", "maintain"
+    val category: String = "",
     val name: String = "",
     val description: String = "",
     val totalCalories: Int = 0,
-    val meals: String = "" // JSON строка с приемами пищи
+    val meals: String = ""
 )
 
-// Сущность для готовых блюд
 @Entity(tableName = "predefined_meals")
 data class PredefinedMealEntity(
     @PrimaryKey(autoGenerate = true)
@@ -57,11 +52,13 @@ data class PredefinedMealEntity(
     val protein: Int = 0,
     val fat: Int = 0,
     val carbs: Int = 0,
-    val category: String = "", // "breakfast", "lunch", "dinner", "snack"
-    val tags: String = "" // "популярное,быстрое,пп"
+    val category: String = "",
+    val mealTypes: String = "",
+    val ingredients: String = "",
+    val recipe: String = "",
+    val tags: String = ""
 )
 
-// Модель для UI
 data class MealSuggestion(
     val mealType: String,
     val name: String,
@@ -74,4 +71,37 @@ data class MealSuggestion(
 data class MealPlanCategory(
     val title: String,
     val meals: List<MealSuggestion>
+)
+
+data class MealPlanGroup(
+    val id: Int,
+    val title: String,
+    val calorieRange: IntRange,
+    val proteinRange: IntRange,
+    val targetCalories: Int,
+    val targetProtein: Int
+)
+
+data class PlannedMealSlot(
+    val mealType: String,
+    val title: String,
+    val dishes: List<PredefinedMealEntity>,
+    val totalCalories: Int,
+    val totalProtein: Int,
+    val totalFat: Int,
+    val totalCarbs: Int
+)
+
+data class DailyMealPlan(
+    val dayLabel: String,
+    val slots: List<PlannedMealSlot>,
+    val totalCalories: Int,
+    val totalProtein: Int,
+    val totalFat: Int,
+    val totalCarbs: Int
+)
+
+data class WeeklyMealPlan(
+    val group: MealPlanGroup,
+    val days: List<DailyMealPlan>
 )

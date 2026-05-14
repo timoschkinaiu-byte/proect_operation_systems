@@ -2,7 +2,11 @@ package com.example.lifeadvices11.ui.sections.nutrition
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.lifeadvices11.data.models.*
+import com.example.lifeadvices11.data.models.DailyNutritionEntity
+import com.example.lifeadvices11.data.models.MealEntryEntity
+import com.example.lifeadvices11.data.models.NutritionNorm
+import com.example.lifeadvices11.data.models.UserAnthroData
+import com.example.lifeadvices11.data.models.WeeklyMealPlan
 import com.example.lifeadvices11.data.repositories.NutritionRepository
 import com.example.lifeadvices11.data.repositories.UserRepository
 import com.example.lifeadvices11.di.AppModule
@@ -25,8 +29,8 @@ class NutritionViewModel : ViewModel() {
     private val _todayMeals = MutableStateFlow<List<MealEntryEntity>>(emptyList())
     val todayMeals: StateFlow<List<MealEntryEntity>> = _todayMeals
 
-    private val _recommendedMealPlans = MutableStateFlow<List<MealPlanCategory>>(emptyList())
-    val recommendedMealPlans: StateFlow<List<MealPlanCategory>> = _recommendedMealPlans
+    private val _selectedWeeklyPlan = MutableStateFlow<WeeklyMealPlan?>(null)
+    val selectedWeeklyPlan: StateFlow<WeeklyMealPlan?> = _selectedWeeklyPlan
 
     private val _caloriesProgress = MutableStateFlow(0f)
     val caloriesProgress: StateFlow<Float> = _caloriesProgress
@@ -65,10 +69,11 @@ class NutritionViewModel : ViewModel() {
 
                 _caloriesProgress.value = if (norms.calories > 0) {
                     today.totalCalories.toFloat() / norms.calories.toFloat()
-                } else 0f
+                } else {
+                    0f
+                }
 
-                val plans = nutritionRepository.getRecommendedMealPlans()
-                _recommendedMealPlans.value = plans
+                _selectedWeeklyPlan.value = nutritionRepository.getCurrentWeeklyMealPlan()
             }
 
             _isLoading.value = false
