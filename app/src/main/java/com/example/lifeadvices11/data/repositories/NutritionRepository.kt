@@ -9,10 +9,13 @@ import com.example.lifeadvices11.data.models.MealEntryEntity
 import com.example.lifeadvices11.data.models.MealPlanCategory
 import com.example.lifeadvices11.data.models.MealPlanGroup
 import com.example.lifeadvices11.data.models.MealSuggestion
+import com.example.lifeadvices11.data.models.NutritionProgressMetric
+import com.example.lifeadvices11.data.models.NutritionProgressPoint
 import com.example.lifeadvices11.data.models.PlannedMealSlot
 import com.example.lifeadvices11.data.models.PredefinedMealEntity
 import com.example.lifeadvices11.data.models.UserAnthroData
 import com.example.lifeadvices11.data.models.WeeklyMealPlan
+import com.example.lifeadvices11.data.models.WeightEntryEntity
 import com.example.lifeadvices11.utils.NutritionCalculator
 import java.util.Calendar
 import kotlin.math.abs
@@ -153,12 +156,46 @@ class NutritionRepository(
         nutritionDao.insertDailyNutrition(updatedDaily)
     }
 
+    suspend fun addPlannedMealSlot(slot: PlannedMealSlot) {
+        slot.dishes.forEach { meal ->
+            addMeal(
+                mealType = slot.mealType,
+                foodName = meal.name,
+                calories = meal.calories,
+                protein = meal.protein,
+                fat = meal.fat,
+                carbs = meal.carbs
+            )
+        }
+    }
+
+    suspend fun removeMeal(mealEntryId: Long) {
+        val mealEntry = nutritionDao.getMealEntryById(mealEntryId) ?: return
+        nutritionDao.deleteMealEntryById(mealEntryId)
+
+        val remainingMeals = nutritionDao.getMealsForDaySync(mealEntry.dailyNutritionId)
+        val dailyNutrition = nutritionDao.getDailyNutritionByDate(getStartOfDay()) ?: return
+
+        val updatedDaily = dailyNutrition.copy(
+            totalCalories = remainingMeals.sumOf { it.calories },
+            totalProtein = remainingMeals.sumOf { it.protein },
+            totalFat = remainingMeals.sumOf { it.fat },
+            totalCarbs = remainingMeals.sumOf { it.carbs }
+        )
+        nutritionDao.insertDailyNutrition(updatedDaily)
+    }
+
     suspend fun getPredefinedMeals(): List<PredefinedMealEntity> {
         val existingMeals = nutritionDao.getAllPredefinedMeals()
         if (existingMeals.isNotEmpty()) return existingMeals
 
         nutritionDao.insertPredefinedMeals(NutritionSeedData.predefinedMeals())
         return nutritionDao.getAllPredefinedMeals()
+    }
+
+    suspend fun getCustomMeals(): List<PredefinedMealEntity> {
+        ensureMealsSeeded()
+        return nutritionDao.getCustomMeals()
     }
 
     suspend fun getPredefinedMealById(mealId: Long): PredefinedMealEntity? {
@@ -173,6 +210,33 @@ class NutritionRepository(
 
     suspend fun getRecommendedMealPlans(): List<MealPlanCategory> = emptyList()
 
+    suspend fun addCustomMeal(
+        name: String,
+        category: String,
+        mealTypes: List<String>,
+        calories: Int?,
+        protein: Int?,
+        fat: Int?,
+        carbs: Int?,
+        ingredients: String,
+        recipe: String
+    ) {
+        val customMeal = PredefinedMealEntity(
+            name = name.trim(),
+            calories = calories ?: 0,
+            protein = protein ?: 0,
+            fat = fat ?: 0,
+            carbs = carbs ?: 0,
+            category = category,
+            mealTypes = mealTypes.joinToString(","),
+            ingredients = ingredients.trim(),
+            recipe = recipe.trim(),
+            tags = "",
+            isCustom = true
+        )
+        nutritionDao.insertPredefinedMeal(customMeal)
+    }
+
     suspend fun getCurrentWeeklyMealPlan(): WeeklyMealPlan? {
         val userData = getUserAnthroData() ?: return null
         val norms = NutritionCalculator.calculateNutritionNorm(userData)
@@ -184,6 +248,67 @@ class NutritionRepository(
     suspend fun getAllWeeklyMealPlans(): List<WeeklyMealPlan> {
         val meals = getPredefinedMeals()
         return buildPlanGroups().map { buildWeeklyMealPlan(meals, it) }
+    }
+
+    suspend fun saveWeight(weight: Float) {
+        nutritionDao.insertWeightEntry(
+            WeightEntryEntity(
+                weight = weight,
+                date = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun getLatestWeight(): Float? {
+        return nutritionDao.getLatestWeightEntry()?.weight ?: userDao.getProfileSync()?.weight?.toFloat()
+    }
+
+    suspend fun getProgressPoints(metric: NutritionProgressMetric): List<NutritionProgressPoint> {
+        val fromDate = getStartOfDayOffset(daysBack = 13)
+        val userData = getUserAnthroData()
+        val norms = userData?.let { NutritionCalculator.calculateNutritionNorm(it) }
+
+        return when (metric) {
+            NutritionProgressMetric.WEIGHT -> {
+                val baselineWeight = nutritionDao.getLatestWeightEntry()?.weight
+                    ?: userDao.getProfileSync()?.weight?.toFloat()
+                    ?: 0f
+                nutritionDao.getWeightEntriesFromDate(fromDate).map { entry ->
+                    NutritionProgressPoint(
+                        label = formatDayLabel(entry.date),
+                        value = entry.weight,
+                        goal = baselineWeight,
+                        isWithinGoal = entry.weight in (baselineWeight * 0.95f)..(baselineWeight * 1.05f)
+                    )
+                }
+            }
+
+            else -> {
+                nutritionDao.getDailyNutritionFromDate(fromDate).map { entry ->
+                    val goalValue = when (metric) {
+                        NutritionProgressMetric.CALORIES -> (norms?.calories ?: entry.goalCalories).toFloat()
+                        NutritionProgressMetric.PROTEIN -> (norms?.protein ?: entry.goalProtein).toFloat()
+                        NutritionProgressMetric.FAT -> (norms?.fat ?: entry.goalFat).toFloat()
+                        NutritionProgressMetric.CARBS -> (norms?.carbs ?: entry.goalCarbs).toFloat()
+                        NutritionProgressMetric.WEIGHT -> 0f
+                    }
+                    val actualValue = when (metric) {
+                        NutritionProgressMetric.CALORIES -> entry.totalCalories.toFloat()
+                        NutritionProgressMetric.PROTEIN -> entry.totalProtein.toFloat()
+                        NutritionProgressMetric.FAT -> entry.totalFat.toFloat()
+                        NutritionProgressMetric.CARBS -> entry.totalCarbs.toFloat()
+                        NutritionProgressMetric.WEIGHT -> 0f
+                    }
+
+                    NutritionProgressPoint(
+                        label = formatDayLabel(entry.date),
+                        value = actualValue,
+                        goal = goalValue,
+                        isWithinGoal = isWithinNutritionGoal(actualValue, goalValue)
+                    )
+                }
+            }
+        }
     }
 
     private suspend fun getUserAnthroData(): UserAnthroData? {
@@ -211,6 +336,30 @@ class NutritionRepository(
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         return calendar.timeInMillis
+    }
+
+    private fun getStartOfDayOffset(daysBack: Int): Long {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        calendar.add(Calendar.DAY_OF_YEAR, -daysBack)
+        return calendar.timeInMillis
+    }
+
+    private fun formatDayLabel(timestamp: Long): String {
+        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val month = calendar.get(Calendar.MONTH) + 1
+        return "%02d.%02d".format(day, month)
+    }
+
+    private fun isWithinNutritionGoal(actual: Float, goal: Float): Boolean {
+        if (goal <= 0f) return false
+        val lowerBound = goal * 0.9f
+        val upperBound = goal * 1.1f
+        return actual in lowerBound..upperBound
     }
 
     private fun buildPlanGroups(): List<MealPlanGroup> {

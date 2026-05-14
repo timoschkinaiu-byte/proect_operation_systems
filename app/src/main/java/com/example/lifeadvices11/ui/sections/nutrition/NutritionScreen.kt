@@ -1,6 +1,7 @@
-package com.example.lifeadvices11.ui.sections.nutrition
+﻿package com.example.lifeadvices11.ui.sections.nutrition
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,19 +22,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -65,6 +75,7 @@ import com.example.lifeadvices11.ui.navigation.Screen
 import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +92,11 @@ fun NutritionScreen(navController: NavController) {
     val caloriesProgress by viewModel.caloriesProgress.collectAsState()
     val todayMeals by viewModel.todayMeals.collectAsState()
     val weeklyPlan by viewModel.selectedWeeklyPlan.collectAsState()
+    val allPredefinedMeals by viewModel.allPredefinedMeals.collectAsState()
+    val latestWeight by viewModel.latestWeight.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val refreshTokenFlow = navController.currentBackStackEntry?.savedStateHandle?.getStateFlow("nutrition_refresh", 0L)
+    val refreshToken by (refreshTokenFlow?.collectAsState() ?: remember { mutableStateOf(0L) })
 
     LaunchedEffect(Unit) {
         val hasOnboarding = withContext(Dispatchers.IO) {
@@ -94,6 +109,13 @@ fun NutritionScreen(navController: NavController) {
             navController.navigate(Screen.NutritionOnboarding.route) {
                 popUpTo(Screen.Nutrition.route) { inclusive = true }
             }
+        }
+    }
+
+    LaunchedEffect(refreshToken) {
+        if (refreshToken != 0L) {
+            viewModel.refreshData()
+            navController.currentBackStackEntry?.savedStateHandle?.set("nutrition_refresh", 0L)
         }
     }
 
@@ -115,7 +137,7 @@ fun NutritionScreen(navController: NavController) {
                 TopAppBar(
                     title = { Text("Питание") },
                     actions = {
-                        IconButton(onClick = { }) {
+                        IconButton(onClick = { navController.navigate(Screen.NutritionProgress.route) }) {
                             Icon(Icons.Default.ShowChart, contentDescription = "Статистика")
                         }
                     }
@@ -137,29 +159,57 @@ fun NutritionScreen(navController: NavController) {
                         text = { Text("Рационы") },
                         icon = { Icon(Icons.Default.Bookmark, contentDescription = null) }
                     )
+                    Tab(
+                        selected = selectedTabIndex == 2,
+                        onClick = { selectedTabIndex = 2 },
+                        text = { Text("Блюда") },
+                        icon = { Icon(Icons.Default.ChevronRight, contentDescription = null) }
+                    )
                 }
             }
         }
     ) { paddingValues ->
-        when (selectedTabIndex) {
-            0 -> MainTab(
-                paddingValues = paddingValues,
-                todayNutrition = todayNutrition,
-                userNorms = userNorms,
-                caloriesProgress = caloriesProgress,
-                meals = todayMeals,
-                onAddMealClick = { }
-            )
+            when (selectedTabIndex) {
+                0 -> MainTab(
+                    paddingValues = paddingValues,
+                    todayNutrition = todayNutrition,
+                    userNorms = userNorms,
+                    caloriesProgress = caloriesProgress,
+                    meals = todayMeals,
+                    weeklyPlan = weeklyPlan,
+                    latestWeight = latestWeight,
+                    onAddMealClick = { },
+                    onAddMealSlot = { slot -> viewModel.addPlannedMealSlot(slot) },
+                    onMealClick = { meal ->
+                        navController.navigate(Screen.NutritionMealDetail.createRoute(meal.id))
+                    },
+                    onRemoveMealClick = { mealEntryId -> viewModel.removeTodayMeal(mealEntryId) },
+                    onSaveWeight = { weight -> viewModel.saveWeight(weight) }
+                )
 
-            1 -> WeeklyPlanTab(
-                paddingValues = paddingValues,
-                weeklyPlan = weeklyPlan,
-                onMealClick = { meal ->
-                    navController.navigate(Screen.NutritionMealDetail.createRoute(meal.id))
-                }
-            )
+                1 -> WeeklyPlanTab(
+                    paddingValues = paddingValues,
+                    weeklyPlan = weeklyPlan,
+                    allMeals = allPredefinedMeals,
+                    onMealClick = { meal ->
+                        navController.navigate(Screen.NutritionMealDetail.createRoute(meal.id))
+                    },
+                    onReplaceMeal = { dayLabel, slotTitle, oldMealId, newMeal ->
+                        viewModel.replaceMealInWeeklyPlan(dayLabel, slotTitle, oldMealId, newMeal)
+                    }
+                )
+                2 -> DishesTab(
+                    paddingValues = paddingValues,
+                    meals = allPredefinedMeals,
+                    onAddCustomClick = {
+                        navController.navigate(Screen.NutritionCreateMeal.route)
+                    },
+                    onMealClick = { meal ->
+                        navController.navigate(Screen.NutritionMealDetail.createRoute(meal.id))
+                    }
+                )
+            }
         }
-    }
 }
 
 @Composable
@@ -169,9 +219,18 @@ private fun MainTab(
     userNorms: NutritionNorm?,
     caloriesProgress: Float,
     meals: List<MealEntryEntity>,
-    onAddMealClick: () -> Unit
+    weeklyPlan: WeeklyMealPlan?,
+    latestWeight: Float?,
+    onAddMealClick: () -> Unit,
+    onAddMealSlot: (PlannedMealSlot) -> Unit,
+    onMealClick: (PredefinedMealEntity) -> Unit,
+    onRemoveMealClick: (Long) -> Unit,
+    onSaveWeight: (Float) -> Unit
 ) {
     val mealsByType = meals.groupBy { it.mealType }
+    var showTodayMenuDialog by remember(weeklyPlan) { mutableStateOf(false) }
+    val todayPlan = remember(weeklyPlan) { weeklyPlan?.days?.firstOrNull { it.dayLabel == currentDayLabel() } }
+    var weightInput by remember(latestWeight) { mutableStateOf(latestWeight?.let { trimWeight(it) } ?: "") }
 
     Column(
         modifier = Modifier
@@ -194,20 +253,32 @@ private fun MainTab(
             carbs = Pair(todayNutrition?.totalCarbs ?: 0, userNorms?.carbs ?: 0)
         )
 
-        QuickAddButton(onAddClick = onAddMealClick)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = "Сегодня",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        MealTypeSection(title = "Завтрак", meals = mealsByType["breakfast"] ?: emptyList())
-        MealTypeSection(title = "Обед", meals = mealsByType["lunch"] ?: emptyList())
-        MealTypeSection(title = "Ужин", meals = mealsByType["dinner"] ?: emptyList())
-        MealTypeSection(title = "Перекусы", meals = mealsByType["snack"] ?: emptyList())
+        MealTypeSection(
+            title = "Завтрак",
+            meals = mealsByType["breakfast"] ?: emptyList(),
+            onRemoveMealClick = onRemoveMealClick
+        )
+        MealTypeSection(
+            title = "Обед",
+            meals = mealsByType["lunch"] ?: emptyList(),
+            onRemoveMealClick = onRemoveMealClick
+        )
+        MealTypeSection(
+            title = "Ужин",
+            meals = mealsByType["dinner"] ?: emptyList(),
+            onRemoveMealClick = onRemoveMealClick
+        )
+        MealTypeSection(
+            title = "Перекусы",
+            meals = mealsByType["snack"] ?: emptyList(),
+            onRemoveMealClick = onRemoveMealClick
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -216,7 +287,29 @@ private fun MainTab(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+        WeightInputCard(
+            weight = weightInput,
+            onWeightChange = { weightInput = normalizeWeightInput(it) },
+            onSaveClick = {
+                weightInput.toFloatOrNull()?.let(onSaveWeight)
+            }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        TodayMenuButton(onClick = { showTodayMenuDialog = true })
+        Spacer(modifier = Modifier.height(8.dp))
+        QuickAddButton(onAddClick = { showTodayMenuDialog = true })
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    if (showTodayMenuDialog) {
+        TodayMenuDialog(
+            todayPlan = todayPlan,
+            onDismiss = { showTodayMenuDialog = false },
+            onAddMealSlot = onAddMealSlot,
+            onMealClick = onMealClick
+        )
     }
 }
 
@@ -224,7 +317,9 @@ private fun MainTab(
 private fun WeeklyPlanTab(
     paddingValues: PaddingValues,
     weeklyPlan: WeeklyMealPlan?,
-    onMealClick: (PredefinedMealEntity) -> Unit
+    allMeals: List<PredefinedMealEntity>,
+    onMealClick: (PredefinedMealEntity) -> Unit,
+    onReplaceMeal: (String, String, Long, PredefinedMealEntity) -> Unit
 ) {
     if (weeklyPlan == null) {
         Box(
@@ -268,8 +363,168 @@ private fun WeeklyPlanTab(
                 onToggle = {
                     expandedDays[day.dayLabel] = !(expandedDays[day.dayLabel] ?: false)
                 },
-                onMealClick = onMealClick
+                allMeals = allMeals,
+                onMealClick = onMealClick,
+                onReplaceMeal = onReplaceMeal
             )
+        }
+    }
+}
+
+@Composable
+private fun DishesTab(
+    paddingValues: PaddingValues,
+    meals: List<PredefinedMealEntity>,
+    onAddCustomClick: () -> Unit,
+    onMealClick: (PredefinedMealEntity) -> Unit
+) {
+    var selectedCategory by remember { mutableStateOf("all") }
+    var selectedMealType by remember { mutableStateOf("all") }
+    var onlyMyMeals by remember { mutableStateOf(false) }
+
+    val categoryOptions = listOf(
+        "all" to "Все",
+        "закуски" to "Закуски",
+        "салаты" to "Салаты",
+        "основные блюда" to "Основные",
+        "супы" to "Супы",
+        "десерты" to "Десерты",
+        "напитки" to "Напитки"
+    )
+    val mealTypeOptions = listOf(
+        "all" to "Все",
+        "breakfast" to "Завтрак",
+        "lunch" to "Обед",
+        "snack" to "Перекус",
+        "dinner" to "Ужин"
+    )
+
+    val filteredMeals = remember(meals, selectedCategory, selectedMealType, onlyMyMeals) {
+        meals.filter { meal ->
+            val categoryMatches = selectedCategory == "all" || meal.category == selectedCategory
+            val mealTypeMatches = selectedMealType == "all" || mealSupportsType(meal, selectedMealType)
+            val myMealsMatches = !onlyMyMeals || meal.isCustom
+            categoryMatches && mealTypeMatches && myMealsMatches
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        Button(
+            onClick = onAddCustomClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text("Добавить свое")
+        }
+
+        FilterSection(
+            title = "Категория",
+            options = categoryOptions,
+            selected = selectedCategory,
+            onSelected = { selectedCategory = it }
+        )
+        FilterSection(
+            title = "Прием пищи",
+            options = mealTypeOptions,
+            selected = selectedMealType,
+            onSelected = { selectedMealType = it }
+        )
+
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = onlyMyMeals,
+                onCheckedChange = { onlyMyMeals = it }
+            )
+            Text(
+                text = "Мои блюда",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(filteredMeals) { meal ->
+                DishBrowserRow(
+                    meal = meal,
+                    onClick = { onMealClick(meal) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterSection(
+    title: String,
+    options: List<Pair<String, String>>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+        Row(
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            options.forEach { (value, label) ->
+                FilterChip(
+                    selected = selected == value,
+                    onClick = { onSelected(value) },
+                    label = { Text(label) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DishBrowserRow(
+    meal: PredefinedMealEntity,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = meal.name,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "${meal.calories} ккал • Б ${meal.protein} • Ж ${meal.fat} • У ${meal.carbs}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = "Открыть блюдо")
         }
     }
 }
@@ -320,7 +575,9 @@ private fun DayPlanCard(
     dailyCarbs: Int,
     slots: List<PlannedMealSlot>,
     onToggle: () -> Unit,
-    onMealClick: (PredefinedMealEntity) -> Unit
+    allMeals: List<PredefinedMealEntity>,
+    onMealClick: (PredefinedMealEntity) -> Unit,
+    onReplaceMeal: (String, String, Long, PredefinedMealEntity) -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -352,7 +609,13 @@ private fun DayPlanCard(
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(12.dp))
                 slots.forEachIndexed { index, slot ->
-                    MealSlotSection(slot = slot, onMealClick = onMealClick)
+                    MealSlotSection(
+                        dayLabel = dayLabel,
+                        slot = slot,
+                        allMeals = allMeals,
+                        onMealClick = onMealClick,
+                        onReplaceMeal = onReplaceMeal
+                    )
                     if (index != slots.lastIndex) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                     }
@@ -364,9 +627,14 @@ private fun DayPlanCard(
 
 @Composable
 private fun MealSlotSection(
+    dayLabel: String,
     slot: PlannedMealSlot,
-    onMealClick: (PredefinedMealEntity) -> Unit
+    allMeals: List<PredefinedMealEntity>,
+    onMealClick: (PredefinedMealEntity) -> Unit,
+    onReplaceMeal: (String, String, Long, PredefinedMealEntity) -> Unit
 ) {
+    var mealForReplacement by remember(dayLabel, slot.title) { mutableStateOf<PredefinedMealEntity?>(null) }
+
     Column {
         Text(
             text = "${slot.title} • ${slot.totalCalories} ккал • Б ${slot.totalProtein} • Ж ${slot.totalFat} • У ${slot.totalCarbs}",
@@ -375,7 +643,23 @@ private fun MealSlotSection(
         )
         Spacer(modifier = Modifier.height(8.dp))
         slot.dishes.forEach { meal ->
-            DishLine(meal = meal, onClick = { onMealClick(meal) })
+            DishLine(
+                meal = meal,
+                onClick = { onMealClick(meal) },
+                onEditClick = { mealForReplacement = meal }
+            )
+        }
+
+        mealForReplacement?.let { currentMeal ->
+            MealReplacementDialog(
+                currentMeal = currentMeal,
+                allMeals = allMeals,
+                onDismiss = { mealForReplacement = null },
+                onReplace = { newMeal ->
+                    onReplaceMeal(dayLabel, slot.title, currentMeal.id, newMeal)
+                    mealForReplacement = null
+                }
+            )
         }
     }
 }
@@ -383,18 +667,23 @@ private fun MealSlotSection(
 @Composable
 private fun DishLine(
     meal: PredefinedMealEntity,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onClick() }
+                .padding(end = 8.dp)
+        ) {
             Text(text = meal.name, style = MaterialTheme.typography.bodyLarge)
             Text(
                 text = "${meal.category} • ${formatMealTypes(meal.mealTypes)}",
@@ -408,8 +697,102 @@ private fun DishLine(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.size(8.dp))
-            Icon(Icons.Default.ChevronRight, contentDescription = "Открыть блюдо")
+            IconButton(onClick = onEditClick) {
+                Icon(Icons.Default.Edit, contentDescription = "Заменить блюдо")
+            }
+            IconButton(onClick = onClick) {
+                Icon(Icons.Default.ChevronRight, contentDescription = "Открыть блюдо")
+            }
+        }
+    }
+}
+
+@Composable
+private fun MealReplacementDialog(
+    currentMeal: PredefinedMealEntity,
+    allMeals: List<PredefinedMealEntity>,
+    onDismiss: () -> Unit,
+    onReplace: (PredefinedMealEntity) -> Unit
+) {
+    val alternatives = remember(currentMeal, allMeals) {
+        val sameCategoryMeals = allMeals
+            .filter { it.id != currentMeal.id }
+            .filter { it.category == currentMeal.category }
+            .sortedBy { replacementScore(it, currentMeal) }
+
+        val similarMeals = sameCategoryMeals.filter { it.isSimilarForReplacement(currentMeal) }
+        if (similarMeals.isNotEmpty()) similarMeals else sameCategoryMeals
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text("Заменить блюдо")
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = currentMeal.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        text = {
+            if (alternatives.isEmpty()) {
+                Text("Не нашлось других блюд в той же категории.")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(alternatives) { alternative ->
+                        ReplacementOptionRow(
+                            meal = alternative,
+                            onAddClick = { onReplace(alternative) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = null)
+                Spacer(modifier = Modifier.size(6.dp))
+                Text("Закрыть")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ReplacementOptionRow(
+    meal: PredefinedMealEntity,
+    onAddClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = meal.name, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = "${meal.calories} ккал • Б ${meal.protein} • Ж ${meal.fat} • У ${meal.carbs}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = onAddClick) {
+                Icon(Icons.Default.Add, contentDescription = "Выбрать блюдо")
+            }
         }
     }
 }
@@ -549,9 +932,196 @@ private fun QuickAddButton(onAddClick: () -> Unit) {
 }
 
 @Composable
+private fun TodayMenuButton(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Меню на сегодня",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = currentDayLabel(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = "Открыть меню на сегодня",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeightInputCard(
+    weight: String,
+    onWeightChange: (String) -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Вес",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = weight,
+                onValueChange = onWeightChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Текущий вес") }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onSaveClick,
+                enabled = weight.toFloatOrNull() != null,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Сохранить вес")
+            }
+        }
+    }
+}
+
+@Composable
+private fun TodayMenuDialog(
+    todayPlan: com.example.lifeadvices11.data.models.DailyMealPlan?,
+    onDismiss: () -> Unit,
+    onAddMealSlot: (PlannedMealSlot) -> Unit,
+    onMealClick: (PredefinedMealEntity) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text("Меню на сегодня")
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = todayPlan?.dayLabel ?: currentDayLabel(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        text = {
+            if (todayPlan == null) {
+                Text("Рацион на сегодня пока не найден.")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(todayPlan.slots) { slot ->
+                        TodayMenuSlotCard(
+                            slot = slot,
+                            onAddClick = { onAddMealSlot(slot) },
+                            onMealClick = onMealClick
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = null)
+                Spacer(modifier = Modifier.size(6.dp))
+                Text("Закрыть")
+            }
+        }
+    )
+}
+
+@Composable
+private fun TodayMenuSlotCard(
+    slot: PlannedMealSlot,
+    onAddClick: () -> Unit,
+    onMealClick: (PredefinedMealEntity) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = slot.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "${slot.totalCalories} ккал • Б ${slot.totalProtein} • Ж ${slot.totalFat} • У ${slot.totalCarbs}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onAddClick) {
+                    Icon(Icons.Default.Add, contentDescription = "Добавить прием пищи")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            slot.dishes.forEach { meal ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onMealClick(meal) }
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = meal.name, style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = "${meal.calories} ккал • Б ${meal.protein} • Ж ${meal.fat} • У ${meal.carbs}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(Icons.Default.ChevronRight, contentDescription = "Открыть блюдо")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MealTypeSection(
     title: String,
-    meals: List<MealEntryEntity>
+    meals: List<MealEntryEntity>,
+    onRemoveMealClick: (Long) -> Unit
 ) {
     if (meals.isEmpty()) return
 
@@ -567,13 +1137,16 @@ private fun MealTypeSection(
         )
 
         meals.forEach { meal ->
-            MealCard(meal = meal)
+            MealCard(meal = meal, onRemoveClick = { onRemoveMealClick(meal.id) })
         }
     }
 }
 
 @Composable
-private fun MealCard(meal: MealEntryEntity) {
+private fun MealCard(
+    meal: MealEntryEntity,
+    onRemoveClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -594,11 +1167,85 @@ private fun MealCard(meal: MealEntryEntity) {
                     color = Color.Gray
                 )
             }
-            Text(
-                text = "${meal.calories} ккал",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${meal.calories} ккал",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                IconButton(onClick = onRemoveClick) {
+                    Icon(Icons.Default.Delete, contentDescription = "Удалить блюдо")
+                }
+            }
         }
     }
 }
+
+private fun PredefinedMealEntity.isSimilarForReplacement(reference: PredefinedMealEntity): Boolean {
+    val calorieDelta = kotlin.math.abs(calories - reference.calories)
+    val proteinDelta = kotlin.math.abs(protein - reference.protein)
+    val fatDelta = kotlin.math.abs(fat - reference.fat)
+    val carbsDelta = kotlin.math.abs(carbs - reference.carbs)
+
+    val allowedCalories = maxOf(80, (reference.calories * 0.3f).toInt())
+    val allowedProtein = maxOf(8, (reference.protein * 0.45f).toInt())
+    val allowedFat = maxOf(6, (reference.fat * 0.5f).toInt())
+    val allowedCarbs = maxOf(10, (reference.carbs * 0.45f).toInt())
+
+    return calorieDelta <= allowedCalories &&
+        proteinDelta <= allowedProtein &&
+        fatDelta <= allowedFat &&
+        carbsDelta <= allowedCarbs
+}
+
+private fun replacementScore(candidate: PredefinedMealEntity, reference: PredefinedMealEntity): Int {
+    return kotlin.math.abs(candidate.calories - reference.calories) * 3 +
+        kotlin.math.abs(candidate.protein - reference.protein) * 4 +
+        kotlin.math.abs(candidate.fat - reference.fat) * 2 +
+        kotlin.math.abs(candidate.carbs - reference.carbs) * 2
+}
+
+private fun mealSupportsType(
+    meal: PredefinedMealEntity,
+    mealType: String
+): Boolean {
+    return meal.mealTypes
+        .split(",")
+        .map { it.trim() }
+        .any { it.equals(mealType, ignoreCase = true) }
+}
+
+private fun normalizeWeightInput(input: String): String {
+    val filtered = input.filter { it.isDigit() || it == '.' || it == ',' }
+    val normalized = filtered.replace(',', '.')
+    val firstDotIndex = normalized.indexOf('.')
+    return if (firstDotIndex >= 0) {
+        normalized.substring(0, firstDotIndex + 1) +
+            normalized.substring(firstDotIndex + 1).replace(".", "")
+    } else {
+        normalized
+    }
+}
+
+private fun trimWeight(weight: Float): String {
+    return if (weight % 1f == 0f) {
+        weight.toInt().toString()
+    } else {
+        weight.toString()
+    }
+}
+
+private fun currentDayLabel(): String {
+    return when (Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
+        Calendar.MONDAY -> "Понедельник"
+        Calendar.TUESDAY -> "Вторник"
+        Calendar.WEDNESDAY -> "Среда"
+        Calendar.THURSDAY -> "Четверг"
+        Calendar.FRIDAY -> "Пятница"
+        Calendar.SATURDAY -> "Суббота"
+        Calendar.SUNDAY -> "Воскресенье"
+        else -> "Понедельник"
+    }
+}
+
+

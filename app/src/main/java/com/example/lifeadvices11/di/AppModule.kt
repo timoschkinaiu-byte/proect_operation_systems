@@ -7,6 +7,7 @@ import com.example.lifeadvices11.data.repositories.PsychologyRepository
 import com.example.lifeadvices11.data.repositories.StudyRepository
 import com.example.lifeadvices11.data.repositories.UserRepository
 import com.example.lifeadvices11.data.repositories.SleepRepository
+import com.example.lifeadvices11.data.repositories.WorkoutRepository
 
 object AppModule {
 
@@ -39,6 +40,17 @@ object AppModule {
 
     fun providePsychologyRepository(): PsychologyRepository {
         val database = AppDatabase.getInstance(appContext)
-        return PsychologyRepository(database.psychologyDao())
+        return PsychologyRepository(
+            psychologyDao = database.psychologyDao(),
+            context = appContext
+        )
+    }
+
+    fun provideWorkoutRepository(): WorkoutRepository {
+        val database = AppDatabase.getInstance(appContext)
+        return WorkoutRepository(
+            workoutDao = database.workoutDao(),
+            userProfileDao = database.userProfileDao()
+        )
     }
 }

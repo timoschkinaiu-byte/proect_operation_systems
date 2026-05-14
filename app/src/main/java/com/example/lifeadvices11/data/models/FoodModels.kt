@@ -18,6 +18,14 @@ data class DailyNutritionEntity(
     val goalCarbs: Int = 0
 )
 
+@Entity(tableName = "weight_entries")
+data class WeightEntryEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val weight: Float = 0f,
+    val date: Long = System.currentTimeMillis()
+)
+
 @Entity(tableName = "meal_entries")
 data class MealEntryEntity(
     @PrimaryKey(autoGenerate = true)
@@ -56,7 +64,9 @@ data class PredefinedMealEntity(
     val mealTypes: String = "",
     val ingredients: String = "",
     val recipe: String = "",
-    val tags: String = ""
+    val tags: String = "",
+    val isCustom: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
 )
 
 data class MealSuggestion(
@@ -104,4 +114,19 @@ data class DailyMealPlan(
 data class WeeklyMealPlan(
     val group: MealPlanGroup,
     val days: List<DailyMealPlan>
+)
+
+enum class NutritionProgressMetric {
+    CALORIES,
+    WEIGHT,
+    PROTEIN,
+    FAT,
+    CARBS
+}
+
+data class NutritionProgressPoint(
+    val label: String,
+    val value: Float,
+    val goal: Float,
+    val isWithinGoal: Boolean
 )

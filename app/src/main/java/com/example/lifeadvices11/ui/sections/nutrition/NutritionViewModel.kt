@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.lifeadvices11.data.models.DailyNutritionEntity
 import com.example.lifeadvices11.data.models.MealEntryEntity
 import com.example.lifeadvices11.data.models.NutritionNorm
+import com.example.lifeadvices11.data.models.PlannedMealSlot
+import com.example.lifeadvices11.data.models.PredefinedMealEntity
 import com.example.lifeadvices11.data.models.UserAnthroData
 import com.example.lifeadvices11.data.models.WeeklyMealPlan
 import com.example.lifeadvices11.data.repositories.NutritionRepository
@@ -31,6 +33,12 @@ class NutritionViewModel : ViewModel() {
 
     private val _selectedWeeklyPlan = MutableStateFlow<WeeklyMealPlan?>(null)
     val selectedWeeklyPlan: StateFlow<WeeklyMealPlan?> = _selectedWeeklyPlan
+
+    private val _allPredefinedMeals = MutableStateFlow<List<PredefinedMealEntity>>(emptyList())
+    val allPredefinedMeals: StateFlow<List<PredefinedMealEntity>> = _allPredefinedMeals
+
+    private val _latestWeight = MutableStateFlow<Float?>(null)
+    val latestWeight: StateFlow<Float?> = _latestWeight
 
     private val _caloriesProgress = MutableStateFlow(0f)
     val caloriesProgress: StateFlow<Float> = _caloriesProgress
@@ -74,6 +82,8 @@ class NutritionViewModel : ViewModel() {
                 }
 
                 _selectedWeeklyPlan.value = nutritionRepository.getCurrentWeeklyMealPlan()
+                _allPredefinedMeals.value = nutritionRepository.getPredefinedMeals()
+                _latestWeight.value = nutritionRepository.getLatestWeight()
             }
 
             _isLoading.value = false
@@ -94,7 +104,74 @@ class NutritionViewModel : ViewModel() {
         }
     }
 
+    fun addPlannedMealSlot(slot: PlannedMealSlot) {
+        viewModelScope.launch {
+            nutritionRepository.addPlannedMealSlot(slot)
+            loadData()
+        }
+    }
+
+    fun removeTodayMeal(mealEntryId: Long) {
+        viewModelScope.launch {
+            nutritionRepository.removeMeal(mealEntryId)
+            loadData()
+        }
+    }
+
     fun refreshData() {
         loadData()
+    }
+
+    fun saveWeight(weight: Float) {
+        viewModelScope.launch {
+            nutritionRepository.saveWeight(weight)
+            loadData()
+        }
+    }
+
+    fun replaceMealInWeeklyPlan(
+        dayLabel: String,
+        slotTitle: String,
+        oldMealId: Long,
+        newMeal: PredefinedMealEntity
+    ) {
+        val currentPlan = _selectedWeeklyPlan.value ?: return
+
+        val updatedDays = currentPlan.days.map dayMap@{ day ->
+            if (day.dayLabel != dayLabel) return@dayMap day
+
+            val updatedSlots = day.slots.map slotMap@{ slot ->
+                if (slot.title != slotTitle) return@slotMap slot
+
+                val updatedDishes = slot.dishes.map { meal ->
+                    if (meal.id == oldMealId) newMeal else meal
+                }
+
+                recalculateSlot(slot, updatedDishes)
+            }
+
+            day.copy(
+                slots = updatedSlots,
+                totalCalories = updatedSlots.sumOf { it.totalCalories },
+                totalProtein = updatedSlots.sumOf { it.totalProtein },
+                totalFat = updatedSlots.sumOf { it.totalFat },
+                totalCarbs = updatedSlots.sumOf { it.totalCarbs }
+            )
+        }
+
+        _selectedWeeklyPlan.value = currentPlan.copy(days = updatedDays)
+    }
+
+    private fun recalculateSlot(
+        slot: PlannedMealSlot,
+        dishes: List<PredefinedMealEntity>
+    ): PlannedMealSlot {
+        return slot.copy(
+            dishes = dishes,
+            totalCalories = dishes.sumOf { it.calories },
+            totalProtein = dishes.sumOf { it.protein },
+            totalFat = dishes.sumOf { it.fat },
+            totalCarbs = dishes.sumOf { it.carbs }
+        )
     }
 }

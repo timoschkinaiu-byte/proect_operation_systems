@@ -38,6 +38,37 @@ class UserRepository(
         return dao.hasCompletedNutritionOnboarding() ?: false
     }
 
+    suspend fun saveSportOnboardingData(
+        height: Int,
+        weight: Float,
+        age: Int,
+        gender: String,
+        activityLevel: String,
+        sportGoal: String,
+        bodyFocus: String,
+        fitnessLevel: String,
+        trainingDays: List<Int>
+    ) {
+        dao.updatePersonalInfo(height, weight, age, gender)
+        dao.updateActivityLevel(activityLevel)
+        dao.updateSportGoal(sportGoal)
+        dao.updateBodyFocus(bodyFocus)
+        dao.updateFitnessLevel(fitnessLevel)
+        dao.updateTrainingDays(
+            days = trainingDays.joinToString(","),
+            count = trainingDays.size
+        )
+        dao.markSportOnboardingComplete()
+    }
+
+    suspend fun hasCompletedSportOnboarding(): Boolean {
+        return dao.hasCompletedSportOnboarding() ?: false
+    }
+
+    suspend fun getDailyCalories(): Int {
+        return dao.getDailyCalories()
+    }
+
     suspend fun getNutritionData(): UserAnthroData? {
         val profile = dao.getProfileSync() ?: return null
         return UserAnthroData(
