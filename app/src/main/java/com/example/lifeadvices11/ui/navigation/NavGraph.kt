@@ -18,6 +18,7 @@ import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingScre
 import com.example.lifeadvices11.ui.onboarding.sport.SportOnboardingNav
 import com.example.lifeadvices11.ui.onboarding.psychology.PsychologyOnboardingScreen
 import com.example.lifeadvices11.ui.sections.sleep.AddSleepEntryScreen
+import com.example.lifeadvices11.ui.sections.sleep.SleepInsightsScreen
 import com.example.lifeadvices11.ui.onboarding.sleep.SleepOnboardingScreen
 import com.example.lifeadvices11.ui.onboarding.study.StudyOnboardingScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepPracticeDetailScreen
@@ -42,6 +43,7 @@ sealed class Screen(val route: String) {
     object StudyOnboarding : Screen("study_onboarding")
 
     object SleepAddEntry : Screen("sleep_add_entry")
+    object SleepInsights : Screen("sleep_insights")
     object SleepPractices : Screen("sleep_practices")
     object SleepPracticeDetail : Screen("sleep_practice_detail/{practiceId}")
 
@@ -124,6 +126,10 @@ fun AppNavHost(
 
         composable(Screen.SleepAddEntry.route) {
             AddSleepEntryScreen(navController = navController)
+        }
+
+        composable(Screen.SleepInsights.route) {
+            SleepInsightsScreen(navController = navController)
         }
 
         composable(Screen.SleepPractices.route) {

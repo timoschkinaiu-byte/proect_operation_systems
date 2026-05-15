@@ -2,6 +2,7 @@ package com.example.lifeadvices11
 
 import android.app.Application
 import com.example.lifeadvices11.di.AppModule
+import com.example.lifeadvices11.ui.sections.study.StudyReminderScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ class LifeAdvicesApplication : Application() {
             sleepRepository.createSleepProfileIfNotExists()
             val studyRepository = AppModule.provideStudyRepository()
             studyRepository.createStudyProfileIfNotExists()
+            studyRepository.scheduleReminderIfPossible { StudyReminderScheduler.schedule(this@LifeAdvicesApplication, it) }
             val psychologyRepository = AppModule.providePsychologyRepository()
             psychologyRepository.createProfileIfNotExists()
 

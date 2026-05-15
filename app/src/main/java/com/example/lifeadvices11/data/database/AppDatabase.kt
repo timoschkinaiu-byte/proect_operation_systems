@@ -19,6 +19,7 @@ import com.example.lifeadvices11.data.entities.PsychologyProfileEntity
 import com.example.lifeadvices11.data.entities.SleepPracticeEntity
 import com.example.lifeadvices11.data.entities.SleepProfileEntity
 import com.example.lifeadvices11.data.entities.StudyCategoryEntity
+import com.example.lifeadvices11.data.entities.StudyCategoryProgressEntity
 import com.example.lifeadvices11.data.entities.StudyProfileEntity
 import com.example.lifeadvices11.data.entities.UserProfileEntity
 import com.example.lifeadvices11.data.entities.UserWorkoutEntity
@@ -48,9 +49,10 @@ import kotlinx.coroutines.launch
         PredefinedMealEntity::class,
         SleepPracticeEntity::class,
         StudyCategoryEntity::class,
+        StudyCategoryProgressEntity::class,
         PsychologyPracticeEntity::class
     ],
-    version = 10,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

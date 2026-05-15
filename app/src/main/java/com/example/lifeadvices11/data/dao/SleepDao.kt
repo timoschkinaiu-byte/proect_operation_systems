@@ -46,6 +46,9 @@ interface SleepDao {
     @Query("SELECT * FROM daily_sleep ORDER BY date DESC LIMIT 7")
     suspend fun getLastWeekSleep(): List<DailySleepEntity>
 
+    @Query("SELECT * FROM daily_sleep ORDER BY date DESC LIMIT 14")
+    suspend fun getLast14DaysSleep(): List<DailySleepEntity>
+
 
 
     // Sleep practices

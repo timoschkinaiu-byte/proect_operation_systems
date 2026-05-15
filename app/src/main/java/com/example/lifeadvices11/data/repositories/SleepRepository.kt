@@ -51,6 +51,10 @@ class SleepRepository(
         return sleepDao.getLastWeekSleep()
     }
 
+    suspend fun getLast14DaysSleep(): List<DailySleepEntity> {
+        return sleepDao.getLast14DaysSleep().sortedBy { it.date }
+    }
+
     // Practices
     suspend fun getAllPractices(): List<SleepPracticeEntity> {
         return sleepDao.getAllPractices()
