@@ -62,6 +62,8 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.lifeadvices11.ui.theme.Ink
+import com.example.lifeadvices11.ui.theme.WhiteSoft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,7 +135,8 @@ fun StudyScreen(navController: NavController) {
             TopAppBar(
                 title = { Text("Учеба") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = WhiteSoft,
+                    titleContentColor = Ink
                 )
             )
         }

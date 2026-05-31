@@ -76,6 +76,9 @@ import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import com.example.lifeadvices11.ui.theme.Ink
+import com.example.lifeadvices11.ui.theme.LavenderPrimary
+import com.example.lifeadvices11.ui.theme.WhiteSoft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,16 +139,22 @@ fun NutritionScreen(navController: NavController) {
             Column {
                 TopAppBar(
                     title = { Text("Питание") },
+                    colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                        containerColor = WhiteSoft,
+                        titleContentColor = Ink
+                    ),
                     actions = {
                         IconButton(onClick = { navController.navigate(Screen.NutritionProgress.route) }) {
-                            Icon(Icons.Default.ShowChart, contentDescription = "Статистика")
+                            Icon(Icons.Default.ShowChart, contentDescription = "Статистика", tint = LavenderPrimary)
                         }
                     }
                 )
 
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = WhiteSoft,
+                    contentColor = Ink,
+                    divider = {}
                 ) {
                     Tab(
                         selected = selectedTabIndex == 0,

@@ -49,6 +49,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -85,6 +86,8 @@ import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import com.example.lifeadvices11.ui.theme.Ink
+import com.example.lifeadvices11.ui.theme.WhiteSoft
 
 private data class SelectedWorkoutState(
     val workout: WorkoutProgram,

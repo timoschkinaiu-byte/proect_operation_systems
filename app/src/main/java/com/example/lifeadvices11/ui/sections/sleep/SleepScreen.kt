@@ -61,6 +61,9 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.lifeadvices11.ui.theme.Ink
+import com.example.lifeadvices11.ui.theme.LavenderPrimary
+import com.example.lifeadvices11.ui.theme.WhiteSoft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,14 +126,15 @@ fun SleepScreen(navController: NavController) {
             TopAppBar(
                 title = { Text("Сон", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = WhiteSoft,
+                    titleContentColor = Ink
                 ),
                 actions = {
                     IconButton(onClick = { navController.navigate(Screen.SleepPractices.route) }) {
-                        Icon(Icons.Default.Spa, contentDescription = "Практики")
+                        Icon(Icons.Default.Spa, contentDescription = "Практики", tint = LavenderPrimary)
                     }
                     IconButton(onClick = { navController.navigate(Screen.SleepInsights.route) }) {
-                        Icon(Icons.Default.ShowChart, contentDescription = "Статистика сна")
+                        Icon(Icons.Default.ShowChart, contentDescription = "Статистика сна", tint = LavenderPrimary)
                     }
                 }
             )

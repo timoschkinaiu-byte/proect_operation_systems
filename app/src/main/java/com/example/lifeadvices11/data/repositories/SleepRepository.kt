@@ -72,6 +72,8 @@ class SleepRepository(
                 val personalizedPractices = generatePersonalizedPractices(profile)
                 sleepDao.insertPractices(personalizedPractices)
             }
+        } else {
+            repairCorruptedBasePractice(practices)
         }
     }
 
@@ -106,7 +108,7 @@ class SleepRepository(
         return listOf(
             SleepPracticeEntity(
                 title = "Дыхательная техника 4-7-8",
-                shortDescription = "Успокаивает нервную систему за 3 минуты",
+                shortDescription = "Успокаивает нервную систему за 3 минуты.",
                 fullDescription = "Эта техника дыхания была разработана доктором Эндрю Вейлом. Она основана на древней пранаяме и помогает быстро успокоиться, снизить тревожность и подготовиться ко сну. Методика работает за счёт удлинения выдоха, что активирует парасимпатическую нервную систему и замедляет сердечный ритм.",
                 steps = "1. Сядьте прямо или лягте на спину. Кончик языка должен касаться нёба за верхними зубами.\n2. Полностью выдохните через рот, издавая лёгкий свистящий звук.\n3. Закройте рот и медленно вдохните через нос на 4 секунды.\n4. Задержите дыхание на 7 секунд.\n5. Выдохните через рот на 8 секунд, снова издавая свистящий звук.\n6. Повторите цикл 4-8 раз.",
                 duration = 3,
@@ -286,5 +288,24 @@ class SleepRepository(
     suspend fun generateAndSavePractices(profile: SleepProfileEntity) {
         val practices = generatePersonalizedPractices(profile)
         sleepDao.insertPractices(practices)
+    }
+
+    private suspend fun repairCorruptedBasePractice(practices: List<SleepPracticeEntity>) {
+        val corrupted = practices.firstOrNull {
+            it.category == "breathing" && (it.title.contains("?") || it.shortDescription.contains("?"))
+        }
+        if (corrupted != null) {
+            val fixed = getBasePractices().first()
+            sleepDao.updatePractice(
+                corrupted.copy(
+                    title = fixed.title,
+                    shortDescription = fixed.shortDescription,
+                    fullDescription = fixed.fullDescription,
+                    steps = fixed.steps,
+                    benefits = fixed.benefits,
+                    contraindications = fixed.contraindications
+                )
+            )
+        }
     }
 }
