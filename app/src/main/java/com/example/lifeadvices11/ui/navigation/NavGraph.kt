@@ -23,11 +23,13 @@ import com.example.lifeadvices11.ui.onboarding.sleep.SleepOnboardingScreen
 import com.example.lifeadvices11.ui.onboarding.study.StudyOnboardingScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepPracticeDetailScreen
 import com.example.lifeadvices11.ui.sections.sleep.SleepPracticesScreen
+import com.example.lifeadvices11.ui.settings.SettingsScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
 sealed class Screen(val route: String) {
     object Main : Screen("main")
+    object Settings : Screen("settings")
     object Onboarding : Screen("onboarding")
 
     object Nutrition : Screen("nutrition")
@@ -66,6 +68,10 @@ fun AppNavHost(
     ) {
         composable(Screen.Main.route) {
             MainScreen(navController = navController)
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(navController = navController)
         }
 
         composable(Screen.Nutrition.route) {

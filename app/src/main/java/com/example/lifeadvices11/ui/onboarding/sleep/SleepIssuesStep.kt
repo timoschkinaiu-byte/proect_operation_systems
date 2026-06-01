@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.lifeadvices11.ui.common.InputValidation
 
 @Composable
 fun SleepIssuesStep(
@@ -35,6 +36,7 @@ fun SleepIssuesStep(
     val selectedIssue by viewModel.sleepIssues.collectAsState()
     val preferredWakeTime by viewModel.preferredWakeTime.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+    val wakeTimeError = InputValidation.validateTime(preferredWakeTime, "Желаемое время пробуждения")
 
     val issues = listOf(
         Triple("insomnia", "Бессонница", "Трудно заснуть или часто просыпаетесь ночью."),
@@ -50,27 +52,15 @@ fun SleepIssuesStep(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Шаг 3 из 3",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
+        Text("Шаг 3 из 3", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Проблемы и цель",
-            style = MaterialTheme.typography.headlineLarge
-        )
-
+        Text("Проблемы и цель", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(12.dp))
-
         Text(
-            text = "Последний шаг нужен, чтобы сформировать персональные практики для улучшения засыпания и пробуждения.",
+            "Последний шаг нужен, чтобы сформировать персональные практики для улучшения засыпания и пробуждения.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Spacer(modifier = Modifier.height(24.dp))
 
         issues.forEach { (key, title, description) ->
@@ -98,10 +88,7 @@ fun SleepIssuesStep(
                         onClick = { viewModel.updateSleepIssues(key) }
                     )
                     Column(modifier = Modifier.padding(start = 8.dp)) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Text(text = title, style = MaterialTheme.typography.titleMedium)
                         Text(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
@@ -116,14 +103,15 @@ fun SleepIssuesStep(
 
         OutlinedTextField(
             value = preferredWakeTime,
-            onValueChange = viewModel::updatePreferredWakeTime,
+            onValueChange = { viewModel.updatePreferredWakeTime(InputValidation.sanitizeTimeInput(it)) },
             label = { Text("Во сколько хотите просыпаться?") },
             placeholder = { Text("Например, 07:00") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = wakeTimeError != null,
             supportingText = {
-                Text("Это время будет использоваться как ориентир для режима сна.")
+                Text(wakeTimeError ?: "Это время будет использоваться как ориентир для режима сна.")
             }
         )
 
@@ -131,7 +119,10 @@ fun SleepIssuesStep(
 
         Button(
             onClick = onComplete,
-            enabled = selectedIssue.isNotBlank() && preferredWakeTime.isNotBlank() && !isSaving,
+            enabled = selectedIssue.isNotBlank() &&
+                preferredWakeTime.isNotBlank() &&
+                !isSaving &&
+                wakeTimeError == null,
             modifier = Modifier.fillMaxWidth()
         ) {
             if (isSaving) {

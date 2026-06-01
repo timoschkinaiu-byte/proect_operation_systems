@@ -285,9 +285,21 @@ class SleepRepository(
     suspend fun savePractices(practices: List<SleepPracticeEntity>) {
         sleepDao.insertPractices(practices)
     }
+
+    suspend fun replacePractices(practices: List<SleepPracticeEntity>) {
+        sleepDao.clearPractices()
+        sleepDao.insertPractices(practices)
+    }
+
     suspend fun generateAndSavePractices(profile: SleepProfileEntity) {
         val practices = generatePersonalizedPractices(profile)
-        sleepDao.insertPractices(practices)
+        replacePractices(practices)
+    }
+
+    suspend fun updateProfile(transform: (SleepProfileEntity) -> SleepProfileEntity) {
+        createSleepProfileIfNotExists()
+        val current = sleepDao.getSleepProfileSync() ?: SleepProfileEntity(id = 1)
+        sleepDao.updateSleepProfile(transform(current))
     }
 
     private suspend fun repairCorruptedBasePractice(practices: List<SleepPracticeEntity>) {

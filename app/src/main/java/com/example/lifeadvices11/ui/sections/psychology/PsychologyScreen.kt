@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -97,7 +98,7 @@ private data class PsychologyTestDefinition(
     val evaluator: (Int, Int) -> TestOutcome
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun PsychologyScreen(navController: NavController) {
     val viewModel: PsychologyViewModel = viewModel()
@@ -197,6 +198,7 @@ fun PsychologyScreen(navController: NavController) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun PsychologyMainTab(
     modifier: Modifier,
@@ -266,15 +268,17 @@ private fun PsychologyMainTab(
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Отметить настроение", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    maxItemsInEachRow = 3
                 ) {
                     moods.forEach { mood ->
                         MoodChoiceChip(
                             option = mood,
                             selected = selectedMood == mood.key,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxWidth(0.31f),
                             onClick = { selectedMood = mood.key }
                         )
                     }

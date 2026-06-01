@@ -23,11 +23,13 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -210,6 +212,15 @@ fun MainScreen(navController: NavController) {
                     Column {
                         Text("Life Advices", fontWeight = FontWeight.Bold, color = WhiteSoft)
                         Text(currentDate, style = MaterialTheme.typography.bodySmall, color = WhiteSoft.copy(alpha = 0.88f))
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Настройки",
+                            tint = WhiteSoft
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

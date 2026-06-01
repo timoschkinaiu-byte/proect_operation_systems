@@ -80,4 +80,10 @@ class UserRepository(
             goal = profile.goal
         )
     }
+
+    suspend fun updateProfile(transform: (UserProfileEntity) -> UserProfileEntity) {
+        createProfileIfNotExists()
+        val current = dao.getProfileSync() ?: UserProfileEntity(id = 1)
+        dao.updateProfile(transform(current))
+    }
 }

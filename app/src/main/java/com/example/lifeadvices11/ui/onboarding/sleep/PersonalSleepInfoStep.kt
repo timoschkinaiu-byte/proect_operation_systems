@@ -1,6 +1,5 @@
 package com.example.lifeadvices11.ui.onboarding.sleep
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.lifeadvices11.ui.common.InputValidation
 
 @Composable
 fun PersonalSleepInfoStep(
@@ -31,6 +31,10 @@ fun PersonalSleepInfoStep(
     val bedTime by viewModel.bedTime.collectAsState()
     val wakeTime by viewModel.wakeTime.collectAsState()
 
+    val targetHoursError = InputValidation.validateSleepHours(targetHours)
+    val bedTimeError = InputValidation.validateTime(bedTime, "Время сна")
+    val wakeTimeError = InputValidation.validateTime(wakeTime, "Время пробуждения")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,27 +42,15 @@ fun PersonalSleepInfoStep(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Шаг 1 из 3",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
+        Text("Шаг 1 из 3", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Режим сна",
-            style = MaterialTheme.typography.headlineLarge
-        )
-
+        Text("Режим сна", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(12.dp))
-
         Text(
-            text = "Укажем вашу целевую продолжительность сна и привычный график, чтобы настроить рекомендации и трекинг.",
+            "Укажем целевую продолжительность сна и привычный график, чтобы настроить рекомендации и трекинг.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
@@ -69,8 +61,9 @@ fun PersonalSleepInfoStep(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = targetHoursError != null,
             supportingText = {
-                Text("Это значение будет показываться как ежедневная цель в разделе сна.")
+                Text(targetHoursError ?: "Это значение будет показываться как ежедневная цель в разделе сна.")
             }
         )
 
@@ -78,28 +71,32 @@ fun PersonalSleepInfoStep(
 
         OutlinedTextField(
             value = bedTime,
-            onValueChange = viewModel::updateBedTime,
+            onValueChange = { viewModel.updateBedTime(InputValidation.sanitizeTimeInput(it)) },
             label = { Text("Во сколько обычно ложитесь спать?") },
             placeholder = { Text("Например, 23:00") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = bedTimeError != null,
+            supportingText = { bedTimeError?.let { Text(it) } }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = wakeTime,
-            onValueChange = viewModel::updateWakeTime,
+            onValueChange = { viewModel.updateWakeTime(InputValidation.sanitizeTimeInput(it)) },
             label = { Text("Во сколько обычно просыпаетесь?") },
             placeholder = { Text("Например, 07:00") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = wakeTimeError != null,
+            supportingText = { wakeTimeError?.let { Text(it) } }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Формат времени можно вводить в привычном виде, например 07:30 или 23:15.",
+            text = "Формат времени: ЧЧ:ММ, например 07:30 или 23:15.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -108,7 +105,12 @@ fun PersonalSleepInfoStep(
 
         Button(
             onClick = onNext,
-            enabled = targetHours.isNotBlank() && bedTime.isNotBlank() && wakeTime.isNotBlank(),
+            enabled = targetHours.isNotBlank() &&
+                bedTime.isNotBlank() &&
+                wakeTime.isNotBlank() &&
+                targetHoursError == null &&
+                bedTimeError == null &&
+                wakeTimeError == null,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Далее")

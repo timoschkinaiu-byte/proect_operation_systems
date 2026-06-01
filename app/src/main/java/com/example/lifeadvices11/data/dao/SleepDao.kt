@@ -61,6 +61,9 @@ interface SleepDao {
     @Update
     suspend fun updatePractice(practice: SleepPracticeEntity)
 
+    @Query("DELETE FROM sleep_practices")
+    suspend fun clearPractices()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPractices(practices: List<SleepPracticeEntity>)
 }

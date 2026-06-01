@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.lifeadvices11.ui.common.InputValidation
 
 @Composable
 fun PersonalInfoStep(
@@ -34,6 +35,10 @@ fun PersonalInfoStep(
     var age by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
 
+    val heightError = InputValidation.validateHeight(height)
+    val weightError = InputValidation.validateWeight(weight)
+    val ageError = InputValidation.validateAge(age)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -41,7 +46,7 @@ fun PersonalInfoStep(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "ШАГ 1 ИЗ 3",
+            text = "Шаг 1 из 3",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -58,13 +63,16 @@ fun PersonalInfoStep(
         OutlinedTextField(
             value = height,
             onValueChange = {
-                height = it
-                viewModel.updateHeight(it)
+                val sanitized = InputValidation.sanitizeIntegerInput(it)
+                height = sanitized
+                viewModel.updateHeight(sanitized)
             },
             label = { Text("Рост (см)") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = heightError != null,
+            supportingText = { heightError?.let { Text(it) } }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -72,13 +80,16 @@ fun PersonalInfoStep(
         OutlinedTextField(
             value = weight,
             onValueChange = {
-                weight = it
-                viewModel.updateWeight(it)
+                val sanitized = InputValidation.sanitizeDecimalInput(it)
+                weight = sanitized
+                viewModel.updateWeight(sanitized)
             },
             label = { Text("Вес (кг)") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = weightError != null,
+            supportingText = { weightError?.let { Text(it) } }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -86,13 +97,16 @@ fun PersonalInfoStep(
         OutlinedTextField(
             value = age,
             onValueChange = {
-                age = it
-                viewModel.updateAge(it)
+                val sanitized = InputValidation.sanitizeIntegerInput(it)
+                age = sanitized
+                viewModel.updateAge(sanitized)
             },
             label = { Text("Возраст") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = ageError != null,
+            supportingText = { ageError?.let { Text(it) } }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -136,7 +150,13 @@ fun PersonalInfoStep(
 
         Button(
             onClick = onNext,
-            enabled = height.isNotBlank() && weight.isNotBlank() && age.isNotBlank() && gender.isNotBlank(),
+            enabled = height.isNotBlank() &&
+                weight.isNotBlank() &&
+                age.isNotBlank() &&
+                gender.isNotBlank() &&
+                heightError == null &&
+                weightError == null &&
+                ageError == null,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Далее")

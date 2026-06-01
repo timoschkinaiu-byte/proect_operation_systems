@@ -72,6 +72,7 @@ import com.example.lifeadvices11.data.models.PlannedMealSlot
 import com.example.lifeadvices11.data.models.PredefinedMealEntity
 import com.example.lifeadvices11.data.models.WeeklyMealPlan
 import com.example.lifeadvices11.ui.navigation.Screen
+import com.example.lifeadvices11.ui.common.InputValidation
 import com.example.lifeadvices11.ui.onboarding.nutrition.NutritionOnboardingViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -984,6 +985,7 @@ private fun WeightInputCard(
     onWeightChange: (String) -> Unit,
     onSaveClick: () -> Unit
 ) {
+    val weightError = if (weight.isBlank()) null else InputValidation.validateWeightEntry(weight)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1003,12 +1005,14 @@ private fun WeightInputCard(
                 onValueChange = onWeightChange,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                label = { Text("Текущий вес") }
+                label = { Text("Текущий вес") },
+                isError = weightError != null,
+                supportingText = { weightError?.let { Text(it) } }
             )
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = onSaveClick,
-                enabled = weight.toFloatOrNull() != null,
+                enabled = weight.toFloatOrNull() != null && weightError == null,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Сохранить вес")

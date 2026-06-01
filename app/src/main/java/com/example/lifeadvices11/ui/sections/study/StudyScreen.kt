@@ -57,6 +57,7 @@ import com.example.lifeadvices11.data.entities.DailyStudyEntity
 import com.example.lifeadvices11.data.entities.StudyProfileEntity
 import com.example.lifeadvices11.ui.navigation.Screen
 import com.example.lifeadvices11.ui.onboarding.study.StudyOnboardingViewModel
+import com.example.lifeadvices11.ui.common.InputValidation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -283,12 +284,16 @@ private fun StudyContent(
                                 ) {
                                     OutlinedTextField(
                                         value = inputByCategory[category.id].orEmpty(),
-                                        onValueChange = { inputByCategory[category.id] = it },
+                                        onValueChange = { inputByCategory[category.id] = InputValidation.sanitizeDecimalInput(it) },
                                         label = { Text("Фактическое время") },
                                         placeholder = { Text("Например, 1.5") },
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                         modifier = Modifier.weight(1f),
-                                        singleLine = true
+                                        singleLine = true,
+                                        isError = InputValidation.validateCategoryHours(inputByCategory[category.id].orEmpty()) != null,
+                                        supportingText = {
+                                            InputValidation.validateCategoryHours(inputByCategory[category.id].orEmpty())?.let { Text(it) }
+                                        }
                                     )
                                     Button(
                                         onClick = {
@@ -296,7 +301,8 @@ private fun StudyContent(
                                                 category.id,
                                                 inputByCategory[category.id]?.toFloatOrNull() ?: 0f
                                             )
-                                        }
+                                        },
+                                        enabled = InputValidation.validateCategoryHours(inputByCategory[category.id].orEmpty()) == null
                                     ) {
                                         Text("Сохранить")
                                     }
@@ -367,6 +373,7 @@ private fun CategoryNameDialog(
     onConfirm: (String) -> Unit
 ) {
     var value by remember(initialValue) { mutableStateOf(initialValue) }
+    val error = if (value.isBlank()) null else InputValidation.validateRequiredText(value, "Название")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -377,13 +384,15 @@ private fun CategoryNameDialog(
                 onValueChange = { value = it },
                 label = { Text("Название") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                isError = error != null,
+                supportingText = { error?.let { Text(it) } }
             )
         },
         confirmButton = {
             TextButton(
                 onClick = { onConfirm(value) },
-                enabled = value.isNotBlank()
+                enabled = value.isNotBlank() && error == null
             ) {
                 Text("Сохранить")
             }

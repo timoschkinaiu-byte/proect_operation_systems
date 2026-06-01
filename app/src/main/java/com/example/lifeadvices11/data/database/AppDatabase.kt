@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lifeadvices11.data.dao.NutritionDao
 import com.example.lifeadvices11.data.dao.PsychologyDao
@@ -52,7 +53,7 @@ import kotlinx.coroutines.launch
         StudyCategoryProgressEntity::class,
         PsychologyPracticeEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -71,6 +72,12 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var instanceRef: AppDatabase? = null
 
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_completions ADD COLUMN workoutName TEXT")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -78,6 +85,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "life_advices_database"
                 )
+                    .addMigrations(MIGRATION_12_13)
                     .fallbackToDestructiveMigration()
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
